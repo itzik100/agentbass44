@@ -1,99 +1,126 @@
 import React, { useState } from 'react';
-import { ChevronDown, ChevronUp, Film, Music, Image, FileText } from 'lucide-react';
+import { Film, FileText, Star } from 'lucide-react';
 
 export default function ResultsPanel({ results }) {
-  const [open, setOpen] = useState(false);
-
+  const [tab, setTab] = useState('script');
   if (!results) return null;
+  const { script, review, broll, assembly, character, voice } = results;
 
-  const { script, review, broll, assembly, character } = results;
+  const tabs = [
+    { id: 'script', label: '📝 תסריט' },
+    { id: 'review', label: '🔍 ביקורת' },
+    { id: 'broll', label: '🎬 B-roll' },
+    { id: 'timeline', label: '🎞️ טיימליין' },
+  ];
 
   return (
-    <div className="border-t border-zinc-800 bg-zinc-900">
-      <button
-        onClick={() => setOpen(o => !o)}
-        className="w-full flex items-center justify-between px-4 py-2.5 hover:bg-zinc-800 transition-colors text-sm font-medium text-zinc-300"
-      >
-        <span>📦 תוצאות Pipeline מלאות</span>
-        {open ? <ChevronDown className="w-4 h-4" /> : <ChevronUp className="w-4 h-4" />}
-      </button>
+    <div className="flex flex-col h-full">
+      {/* Tabs */}
+      <div className="flex gap-1 px-6 pt-4 border-b border-zinc-800">
+        {tabs.map(t => (
+          <button key={t.id} onClick={() => setTab(t.id)}
+            className={`px-4 py-2 text-sm rounded-t-lg transition-colors ${tab === t.id ? 'bg-zinc-800 text-white' : 'text-zinc-500 hover:text-zinc-300'}`}>
+            {t.label}
+          </button>
+        ))}
+      </div>
 
-      {open && (
-        <div className="p-4 grid grid-cols-2 gap-4 max-h-80 overflow-y-auto text-xs">
-          {/* Script */}
-          {script && (
-            <div className="bg-zinc-800 rounded-xl p-3">
-              <div className="flex items-center gap-1.5 mb-2 text-violet-300 font-medium">
-                <FileText className="w-4 h-4" /> תסריט
-              </div>
-              <p className="text-zinc-400 mb-1"><strong>כותרת:</strong> {script.title}</p>
-              <p className="text-zinc-400 mb-1"><strong>משך:</strong> {script.duration_seconds}s</p>
+      <div className="flex-1 overflow-y-auto p-6">
+
+        {tab === 'script' && script && (
+          <div className="max-w-2xl">
+            <h2 className="text-xl font-bold mb-1">{script.title}</h2>
+            <p className="text-zinc-500 text-sm mb-4">⏱️ {script.duration_seconds} שניות</p>
+            <div className="space-y-4">
               {script.sections?.map((s, i) => (
-                <div key={i} className="mt-1.5 border-t border-zinc-700 pt-1.5">
-                  <p className="text-zinc-300 font-medium">{s.title}</p>
-                  <p className="text-zinc-500 line-clamp-2">{s.content}</p>
+                <div key={i} className="bg-zinc-900 rounded-xl p-4 border border-zinc-800">
+                  <p className="text-violet-300 font-semibold text-sm mb-1">{s.title}</p>
+                  <p className="text-zinc-300 text-sm leading-relaxed">{s.content}</p>
+                  <p className="text-zinc-600 text-xs mt-2">⏱️ {s.duration}s</p>
                 </div>
               ))}
             </div>
-          )}
+          </div>
+        )}
 
-          {/* Review */}
-          {review && (
-            <div className="bg-zinc-800 rounded-xl p-3">
-              <div className="flex items-center gap-1.5 mb-2 text-emerald-300 font-medium">
-                🔍 ביקורת
-              </div>
-              <p className="text-2xl font-bold text-white mb-1">{review.score}<span className="text-zinc-500 text-sm">/10</span></p>
-              {review.issues?.length > 0 && (
-                <div className="mt-1">
-                  <p className="text-red-400 font-medium mb-1">בעיות:</p>
-                  {review.issues.slice(0, 3).map((iss, i) => <p key={i} className="text-zinc-500">• {iss}</p>)}
-                </div>
-              )}
-              {review.improvements?.length > 0 && (
-                <div className="mt-1">
-                  <p className="text-amber-400 font-medium mb-1">שיפורים:</p>
-                  {review.improvements.slice(0, 3).map((imp, i) => <p key={i} className="text-zinc-500">• {imp}</p>)}
-                </div>
-              )}
-            </div>
-          )}
-
-          {/* B-roll */}
-          {broll && broll.length > 0 && (
-            <div className="bg-zinc-800 rounded-xl p-3 col-span-2">
-              <div className="flex items-center gap-1.5 mb-2 text-amber-300 font-medium">
-                <Film className="w-4 h-4" /> B-roll
-              </div>
-              <div className="grid grid-cols-3 gap-2">
-                {broll.flatMap(b => b.images || []).slice(0, 6).map((img, i) => (
-                  <img key={i} src={img.thumb} className="w-full h-16 object-cover rounded-lg" alt="" />
+        {tab === 'review' && review && (
+          <div className="max-w-lg">
+            <div className="bg-zinc-900 rounded-2xl p-6 border border-zinc-800 text-center mb-4">
+              <div className="text-5xl font-black text-white mb-1">{review.score}</div>
+              <div className="text-zinc-500 text-sm">מתוך 10</div>
+              <div className="flex justify-center gap-1 mt-2">
+                {[...Array(10)].map((_, i) => (
+                  <Star key={i} className={`w-3.5 h-3.5 ${i < review.score ? 'text-amber-400 fill-amber-400' : 'text-zinc-700'}`} />
                 ))}
               </div>
             </div>
-          )}
-
-          {/* Assembly */}
-          {assembly?.timeline && (
-            <div className="bg-zinc-800 rounded-xl p-3 col-span-2">
-              <div className="flex items-center gap-1.5 mb-2 text-blue-300 font-medium">
-                🎞️ טיימליין
+            {review.issues?.length > 0 && (
+              <div className="mb-3">
+                <p className="text-red-400 font-medium text-sm mb-2">⚠️ בעיות</p>
+                {review.issues.map((iss, i) => <p key={i} className="text-zinc-400 text-sm mb-1">• {iss}</p>)}
               </div>
-              <div className="flex gap-1 overflow-x-auto pb-1">
-                {assembly.timeline.map((item, i) => (
-                  <div key={i} className={`flex-shrink-0 px-2 py-1.5 rounded text-center ${
-                    item.type === 'presenter' ? 'bg-violet-900' :
-                    item.type === 'broll' ? 'bg-amber-900' : 'bg-blue-900'
-                  }`} style={{ minWidth: `${Math.max(item.duration * 8, 60)}px` }}>
-                    <p className="text-white text-xs">{item.type}</p>
-                    <p className="text-zinc-400 text-xs">{item.duration}s</p>
+            )}
+            {review.improvements?.length > 0 && (
+              <div>
+                <p className="text-amber-400 font-medium text-sm mb-2">💡 שיפורים</p>
+                {review.improvements.map((imp, i) => <p key={i} className="text-zinc-400 text-sm mb-1">• {imp}</p>)}
+              </div>
+            )}
+          </div>
+        )}
+
+        {tab === 'broll' && (
+          <div>
+            <p className="text-zinc-500 text-sm mb-4">{broll?.length || 0} מקורות B-roll נמצאו</p>
+            <div className="space-y-6">
+              {broll?.map((b, i) => (
+                <div key={i}>
+                  <p className="text-zinc-400 font-medium text-sm mb-2">🔍 {b.keyword}</p>
+                  <div className="grid grid-cols-3 gap-2">
+                    {[...(b.images || []), ...(b.videos || [])].slice(0, 6).map((item, j) => (
+                      <a key={j} href={item.url} target="_blank" rel="noopener noreferrer"
+                        className="block rounded-lg overflow-hidden border border-zinc-800 hover:border-violet-500 transition-colors">
+                        <img src={item.thumb} className="w-full h-24 object-cover" alt="" />
+                      </a>
+                    ))}
                   </div>
-                ))}
-              </div>
+                </div>
+              ))}
             </div>
-          )}
-        </div>
-      )}
+          </div>
+        )}
+
+        {tab === 'timeline' && assembly?.timeline && (
+          <div>
+            <p className="text-zinc-500 text-sm mb-4">⏱️ סה"כ: {assembly.total_duration}s</p>
+            <div className="flex gap-1 overflow-x-auto pb-4 mb-6">
+              {assembly.timeline.map((item, i) => (
+                <div key={i} className={`flex-shrink-0 rounded-lg px-3 py-2 text-center border ${
+                  item.type === 'presenter' ? 'bg-violet-900 border-violet-700' :
+                  item.type === 'broll' ? 'bg-amber-900 border-amber-700' : 'bg-blue-900 border-blue-700'
+                }`} style={{ minWidth: `${Math.max(item.duration * 10, 80)}px` }}>
+                  <p className="text-white text-xs font-medium">{item.type}</p>
+                  <p className="text-zinc-400 text-xs">{item.duration}s</p>
+                  <p className="text-zinc-500 text-xs truncate">{item.content?.slice(0, 20)}</p>
+                </div>
+              ))}
+            </div>
+            {assembly.subtitles?.length > 0 && (
+              <div>
+                <p className="text-zinc-400 font-medium text-sm mb-2">כתוביות</p>
+                <div className="space-y-1">
+                  {assembly.subtitles.map((sub, i) => (
+                    <div key={i} className="flex gap-3 text-xs">
+                      <span className="text-zinc-600 w-20 flex-shrink-0">{sub.start}s → {sub.end}s</span>
+                      <span className="text-zinc-300">{sub.text}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+      </div>
     </div>
   );
 }
