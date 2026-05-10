@@ -1,5 +1,7 @@
 import React, { useRef, useState } from 'react';
 import { Film, Music, Type, ZoomIn, ZoomOut } from 'lucide-react';
+import TransitionBadge from './TransitionBadge';
+import ClipFilterBadge from './ClipFilterBadge';
 
 const TRACK_HEIGHT = 48;
 const PX_PER_SEC = 80;
@@ -78,25 +80,47 @@ export default function Timeline({
         borderRadius: 6,
         cursor: 'grab',
         border: selectedClip?.id === clip.id ? '2px solid white' : '2px solid transparent',
-        overflow: 'hidden',
+        overflow: 'visible',
         userSelect: 'none',
       }}
       title={clip.name || clip.text}
     >
-      <div className="px-2 py-1 flex items-center gap-1 h-full">
-        <span className="text-xs text-white font-medium truncate flex-1">
-          {clip.name || clip.text}
-        </span>
-      </div>
-      {/* Resize handle */}
       <div
-        onMouseDown={e => { e.stopPropagation(); handleResizeMouseDown(e, clip, trackType); }}
-        style={{
-          position: 'absolute', right: 0, top: 0, width: 8, height: '100%',
-          cursor: 'ew-resize', backgroundColor: 'rgba(255,255,255,0.2)',
-          borderRadius: '0 6px 6px 0',
-        }}
-      />
+        style={{ borderRadius: 6, overflow: 'hidden', width: '100%', height: '100%', position: 'relative' }}
+      >
+        <div className="px-2 py-1 flex items-center gap-1 h-full">
+          <span className="text-xs text-white font-medium truncate flex-1">
+            {clip.name || clip.text}
+          </span>
+        </div>
+
+        {/* Badges for video clips */}
+        {trackType === 'video' && clip.duration * pps > 80 && (
+          <div
+            className="absolute bottom-1 left-1 flex gap-1"
+            onMouseDown={e => e.stopPropagation()}
+          >
+            <TransitionBadge
+              transition={clip.transition || 'none'}
+              onChange={val => onUpdateClip(clip.id, { transition: val })}
+            />
+            <ClipFilterBadge
+              filter={clip.clipFilter || 'none'}
+              onChange={val => onUpdateClip(clip.id, { clipFilter: val })}
+            />
+          </div>
+        )}
+
+        {/* Resize handle */}
+        <div
+          onMouseDown={e => { e.stopPropagation(); handleResizeMouseDown(e, clip, trackType); }}
+          style={{
+            position: 'absolute', right: 0, top: 0, width: 8, height: '100%',
+            cursor: 'ew-resize', backgroundColor: 'rgba(255,255,255,0.2)',
+            borderRadius: '0 6px 6px 0',
+          }}
+        />
+      </div>
     </div>
   );
 

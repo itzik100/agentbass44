@@ -3,6 +3,9 @@ import { Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 
+const TRANSITIONS = ['none', 'fade', 'slide-left', 'slide-right', 'zoom', 'blur'];
+const CLIP_FILTERS = ['none', 'bright', 'contrast', 'grayscale', 'sepia', 'warm', 'cold', 'vivid', 'dark'];
+
 const FILTERS = ['none', 'bright', 'contrast', 'grayscale', 'sepia', 'warm', 'cold', 'vivid'];
 
 export default function PropertiesPanel({
@@ -131,6 +134,26 @@ export default function PropertiesPanel({
                   onChange={e => onUpdateClip(selectedClip.id, { start: +e.target.value })}
                   className="w-full bg-zinc-800 border border-zinc-700 rounded px-2 py-1 text-xs text-white"
                 />
+              </div>
+              <div>
+                <label className="text-xs text-zinc-500 block mb-1">מעבר (Transition)</label>
+                <select
+                  value={selectedClip.transition || 'none'}
+                  onChange={e => onUpdateClip(selectedClip.id, { transition: e.target.value })}
+                  className="w-full bg-zinc-800 border border-zinc-700 rounded px-2 py-1 text-xs text-white"
+                >
+                  {TRANSITIONS.map(t => <option key={t} value={t}>{t}</option>)}
+                </select>
+              </div>
+              <div>
+                <label className="text-xs text-zinc-500 block mb-1">פילטר קליפ</label>
+                <select
+                  value={selectedClip.clipFilter || 'none'}
+                  onChange={e => onUpdateClip(selectedClip.id, { clipFilter: e.target.value })}
+                  className="w-full bg-zinc-800 border border-zinc-700 rounded px-2 py-1 text-xs text-white"
+                >
+                  {CLIP_FILTERS.map(f => <option key={f} value={f}>{f}</option>)}
+                </select>
               </div>
             </>
           )}

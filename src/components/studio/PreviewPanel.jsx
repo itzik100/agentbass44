@@ -1,7 +1,20 @@
 import React, { useRef, useEffect, useState } from 'react';
-import { Play, Pause, SkipBack, SkipForward, Volume2 } from 'lucide-react';
+import { Play, Pause, SkipBack, SkipForward } from 'lucide-react';
 
-const FILTERS = {
+const CLIP_FILTER_CSS = {
+  none: '',
+  bright: 'brightness(1.3)',
+  contrast: 'contrast(1.4)',
+  grayscale: 'grayscale(1)',
+  sepia: 'sepia(0.8)',
+  warm: 'sepia(0.3) saturate(1.5)',
+  cold: 'hue-rotate(180deg) saturate(0.8)',
+  vivid: 'saturate(2)',
+  dark: 'brightness(0.6)',
+};
+
+// Global filter (from PropertiesPanel)
+const GLOBAL_FILTERS = {
   none: '',
   bright: 'brightness(1.3)',
   contrast: 'contrast(1.4)',
@@ -13,13 +26,34 @@ const FILTERS = {
   vivid: 'saturate(2)',
 };
 
+// Returns CSS style for transition animation based on progress (0→1) into the clip
+function getTransitionStyle(transition, progress) {
+  const DURATION = 0.5; // seconds of transition at clip start
+  const t = Math.min(progress / DURATION, 1); // 0→1 over first 0.5s
+
+  if (t >= 1 || !transition || transition === 'none') return {};
+
+  switch (transition) {
+    case 'fade':
+      return { opacity: t };
+    case 'zoom':
+      return { transform: `scale(${0.85 + 0.15 * t})`, opacity: t };
+    case 'slide-left':
+      return { transform: `translateX(${(1 - t) * 100}%)`, opacity: Math.min(t * 2, 1) };
+    case 'slide-right':
+      return { transform: `translateX(${-(1 - t) * 100}%)`, opacity: Math.min(t * 2, 1) };
+    case 'blur':
+      return { filter: `blur(${(1 - t) * 12}px)`, opacity: t };
+    default:
+      return {};
+  }
+}
+
 export default function PreviewPanel({
   tracks, textOverlays, currentTime, setCurrentTime,
   isPlaying, setIsPlaying, duration, activeFilter
 }) {
-  const videoRef = useRef();
   const intervalRef = useRef();
-  const canvasRef = useRef();
 
   const formatTime = (s) => {
     const m = Math.floor(s / 60);
@@ -31,6 +65,33 @@ export default function PreviewPanel({
   const currentVideoClip = tracks.video.find(
     c => c.type !== 'audio' && currentTime >= c.start && currentTime < c.start + c.duration
   );
+
+  // Progress into clip (seconds)
+  const clipProgress = currentVideoClip ? currentTime - currentVideoClip.start : 0;
+  const transitionStyle = currentVideoClip
+    ? getTransitionStyle(currentVideoClip.transition, clipProgress)
+    : {};
+
+  // Combine global filter + per-clip filter
+  const globalFilterCss = GLOBAL_FILTERS[activeFilter] || '';
+  const clipFilterCss = currentVideoClip ? (CLIP_FILTER_CSS[currentVideoClip.clipFilter] || '') : '';
+  // For blur transition we handle separately; otherwise merge
+  const filterCss = [globalFilterCss, clipFilterCss]
+    .filter(Boolean)
+    .join(' ') || 'none';
+
+  // If transition has its own filter (blur), merge it in
+  const finalFilterCss = transitionStyle.filter
+    ? [transitionStyle.filter, globalFilterCss, clipFilterCss].filter(Boolean).join(' ')
+    : filterCss;
+
+  const mediaStyle = {
+    ...transitionStyle,
+    filter: finalFilterCss !== 'none' ? finalFilterCss : undefined,
+  };
+  // Remove duplicate filter key from transitionStyle
+  delete mediaStyle.filter;
+  mediaStyle.filter = finalFilterCss !== 'none' ? finalFilterCss : undefined;
 
   // Active text overlays at current time
   const activeTexts = textOverlays.filter(
@@ -63,16 +124,17 @@ export default function PreviewPanel({
         {currentVideoClip ? (
           currentVideoClip.type === 'image' ? (
             <img
+              key={currentVideoClip.id}
               src={currentVideoClip.url}
               className="w-full h-full object-contain"
-              style={{ filter: FILTERS[activeFilter] || '' }}
+              style={mediaStyle}
             />
           ) : (
             <video
-              ref={videoRef}
+              key={currentVideoClip.id}
               src={currentVideoClip.url}
               className="w-full h-full object-contain"
-              style={{ filter: FILTERS[activeFilter] || '' }}
+              style={mediaStyle}
               muted
             />
           )
@@ -102,7 +164,19 @@ export default function PreviewPanel({
           </div>
         ))}
 
-        {/* Filter overlay label */}
+        {/* Active clip badges */}
+        {currentVideoClip && (currentVideoClip.transition !== 'none' || currentVideoClip.clipFilter !== 'none') && (
+          <div className="absolute top-2 right-2 flex gap-1">
+            {currentVideoClip.transition && currentVideoClip.transition !== 'none' && (
+              <span className="bg-violet-600/80 text-white text-xs px-1.5 py-0.5 rounded">⟶ {currentVideoClip.transition}</span>
+            )}
+            {currentVideoClip.clipFilter && currentVideoClip.clipFilter !== 'none' && (
+              <span className="bg-emerald-600/80 text-white text-xs px-1.5 py-0.5 rounded">{currentVideoClip.clipFilter}</span>
+            )}
+          </div>
+        )}
+
+        {/* Global filter label */}
         {activeFilter !== 'none' && (
           <div className="absolute top-2 left-2 bg-black/50 text-white text-xs px-2 py-0.5 rounded">
             {activeFilter}
@@ -112,7 +186,6 @@ export default function PreviewPanel({
 
       {/* Controls */}
       <div className="mt-4 w-full max-w-2xl px-4">
-        {/* Seekbar */}
         <div
           className="w-full h-2 bg-zinc-700 rounded-full cursor-pointer relative mb-3"
           onClick={handleSeek}
