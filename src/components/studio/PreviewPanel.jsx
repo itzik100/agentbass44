@@ -91,26 +91,56 @@ export default function PreviewPanel({
     ? getTransitionStyle(currentVideoClip.transition, clipProgress, currentVideoClip.transitionDuration || 0.5)
     : {};
 
-  // Combine global filter + per-clip filter
+  // Color grading CSS from clip properties
+  const getColorGradingCss = (clip) => {
+    if (!clip) return '';
+    const b = clip.brightness ?? 0;
+    const c = clip.contrast ?? 0;
+    const s = clip.saturation ?? 0;
+    const h = clip.hue ?? 0;
+    const parts = [];
+    if (b !== 0) parts.push(`brightness(${1 + b / 100})`);
+    if (c !== 0) parts.push(`contrast(${1 + c / 100})`);
+    if (s !== 0) parts.push(`saturate(${1 + s / 100})`);
+    if (h !== 0) parts.push(`hue-rotate(${h}deg)`);
+    return parts.join(' ');
+  };
+
+  // Ken Burns animation style
+  const getKenBurnsStyle = (clip, progress) => {
+    if (!clip || clip.type !== 'image' || !clip.kenBurns || clip.kenBurns === 'none') return {};
+    const t = Math.min(progress / clip.duration, 1);
+    switch (clip.kenBurns) {
+      case 'zoom-in': return { transform: `scale(${1 + t * 0.2})`, transformOrigin: 'center' };
+      case 'zoom-out': return { transform: `scale(${1.2 - t * 0.2})`, transformOrigin: 'center' };
+      case 'pan-left': return { transform: `translateX(${-t * 5}%)`, transformOrigin: 'center' };
+      case 'pan-right': return { transform: `translateX(${t * 5}%)`, transformOrigin: 'center' };
+      case 'zoom-pan': return { transform: `scale(${1 + t * 0.15}) translateX(${-t * 4}%)`, transformOrigin: 'center' };
+      default: return {};
+    }
+  };
+
+  // Combine global filter + per-clip filter + color grading
   const globalFilterCss = GLOBAL_FILTERS[activeFilter] || '';
   const clipFilterCss = currentVideoClip ? (CLIP_FILTER_CSS[currentVideoClip.clipFilter] || '') : '';
-  // For blur transition we handle separately; otherwise merge
-  const filterCss = [globalFilterCss, clipFilterCss]
-    .filter(Boolean)
-    .join(' ') || 'none';
+  const colorGradingCss = getColorGradingCss(currentVideoClip);
+  const kenBurnsStyle = getKenBurnsStyle(currentVideoClip, clipProgress);
 
-  // If transition has its own filter (blur), merge it in
+  const filterCss = [globalFilterCss, clipFilterCss, colorGradingCss].filter(Boolean).join(' ') || 'none';
+
   const finalFilterCss = transitionStyle.filter
-    ? [transitionStyle.filter, globalFilterCss, clipFilterCss].filter(Boolean).join(' ')
+    ? [transitionStyle.filter, globalFilterCss, clipFilterCss, colorGradingCss].filter(Boolean).join(' ')
     : filterCss;
 
   const mediaStyle = {
     ...transitionStyle,
+    ...kenBurnsStyle,
     filter: finalFilterCss !== 'none' ? finalFilterCss : undefined,
   };
-  // Remove duplicate filter key from transitionStyle
-  delete mediaStyle.filter;
-  mediaStyle.filter = finalFilterCss !== 'none' ? finalFilterCss : undefined;
+  // Merge transforms properly if both transition and kenBurns have transforms
+  if (transitionStyle.transform && kenBurnsStyle.transform) {
+    mediaStyle.transform = `${kenBurnsStyle.transform} ${transitionStyle.transform}`;
+  }
 
   // Active text overlays at current time
   const activeTexts = textOverlays.filter(
@@ -132,17 +162,19 @@ export default function PreviewPanel({
     c => currentTime >= c.start && currentTime < c.start + c.duration && c.url
   );
 
+  const speed = currentVideoClip?.speed || 1;
+
   useEffect(() => {
     if (isPlaying) {
       intervalRef.current = setInterval(() => {
         setCurrentTime(prev => {
           if (prev >= duration) { setIsPlaying(false); return 0; }
-          return prev + 0.1;
+          return prev + 0.1 * speed;
         });
       }, 100);
     }
     return () => clearInterval(intervalRef.current);
-  }, [isPlaying, duration]);
+  }, [isPlaying, duration, speed]);
 
   const handleSeek = (e) => {
     const rect = e.currentTarget.getBoundingClientRect();

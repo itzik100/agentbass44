@@ -194,6 +194,82 @@ export default function PropertiesPanel({
                   className="w-full bg-zinc-800 border border-zinc-700 rounded px-2 py-1 text-xs text-white"
                 />
               </div>
+
+              {/* Speed Control */}
+              <div className="border-t border-zinc-800 pt-2">
+                <label className="text-xs text-zinc-500 block mb-1">
+                  מהירות: <span className="text-zinc-300">{(selectedClip.speed || 1).toFixed(2)}x</span>
+                </label>
+                <input
+                  type="range" min="0.1" max="4" step="0.05"
+                  value={selectedClip.speed || 1}
+                  onChange={e => onUpdateClip(selectedClip.id, { speed: +e.target.value })}
+                  className="w-full accent-orange-500"
+                />
+                <div className="flex justify-between text-xs text-zinc-600 mt-0.5">
+                  <span>0.1x</span><span>1x</span><span>4x</span>
+                </div>
+                <div className="flex gap-1 mt-1">
+                  {[0.25, 0.5, 1, 1.5, 2, 4].map(s => (
+                    <button key={s}
+                      onClick={() => onUpdateClip(selectedClip.id, { speed: s })}
+                      className={`flex-1 text-xs py-0.5 rounded transition-colors ${
+                        (selectedClip.speed || 1) === s
+                          ? 'bg-orange-600 text-white'
+                          : 'bg-zinc-800 text-zinc-400 hover:bg-zinc-700'
+                      }`}
+                    >{s}x</button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Ken Burns (images only) */}
+              {selectedClip.type === 'image' && (
+                <div className="border-t border-zinc-800 pt-2">
+                  <label className="text-xs text-zinc-500 block mb-1">Ken Burns</label>
+                  <select
+                    value={selectedClip.kenBurns || 'none'}
+                    onChange={e => onUpdateClip(selectedClip.id, { kenBurns: e.target.value })}
+                    className="w-full bg-zinc-800 border border-zinc-700 rounded px-2 py-1 text-xs text-white"
+                  >
+                    <option value="none">ללא</option>
+                    <option value="zoom-in">Zoom In</option>
+                    <option value="zoom-out">Zoom Out</option>
+                    <option value="pan-left">Pan Left</option>
+                    <option value="pan-right">Pan Right</option>
+                    <option value="zoom-pan">Zoom + Pan</option>
+                  </select>
+                </div>
+              )}
+
+              {/* Color Grading */}
+              <div className="border-t border-zinc-800 pt-2">
+                <p className="text-xs text-zinc-400 font-medium mb-2">Color Grading</p>
+                {[
+                  { key: 'brightness', label: 'בהירות', min: -100, max: 100, def: 0, color: 'accent-yellow-500' },
+                  { key: 'contrast', label: 'ניגודיות', min: -100, max: 100, def: 0, color: 'accent-blue-500' },
+                  { key: 'saturation', label: 'רוויה', min: -100, max: 100, def: 0, color: 'accent-pink-500' },
+                  { key: 'hue', label: 'גוון', min: -180, max: 180, def: 0, color: 'accent-emerald-500' },
+                ].map(({ key, label, min, max, def, color }) => (
+                  <div key={key} className="mb-1.5">
+                    <div className="flex justify-between text-xs mb-0.5">
+                      <span className="text-zinc-500">{label}</span>
+                      <span className="text-zinc-300">{selectedClip[key] ?? def}</span>
+                    </div>
+                    <input
+                      type="range" min={min} max={max} step="1"
+                      value={selectedClip[key] ?? def}
+                      onChange={e => onUpdateClip(selectedClip.id, { [key]: +e.target.value })}
+                      className={`w-full ${color}`}
+                    />
+                  </div>
+                ))}
+                <button
+                  onClick={() => onUpdateClip(selectedClip.id, { brightness: 0, contrast: 0, saturation: 0, hue: 0 })}
+                  className="text-xs text-zinc-500 hover:text-white mt-1"
+                >↺ אפס</button>
+              </div>
+
               <div>
                 <label className="text-xs text-zinc-500 block mb-1">מעבר (Transition)</label>
                 <select
@@ -215,9 +291,6 @@ export default function PropertiesPanel({
                     onChange={e => onUpdateClip(selectedClip.id, { transitionDuration: +e.target.value })}
                     className="w-full accent-violet-500"
                   />
-                  <div className="flex justify-between text-xs text-zinc-600 mt-0.5">
-                    <span>0.1s</span><span>2s</span>
-                  </div>
                 </div>
               )}
               <div>

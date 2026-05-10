@@ -5,6 +5,7 @@ import ClipFilterBadge from './ClipFilterBadge';
 
 const TRACK_HEIGHT = 48;
 const PX_PER_SEC = 80;
+const SNAP_THRESHOLD = 8; // pixels
 
 export default function Timeline({
   tracks, textOverlays, currentTime, setCurrentTime,
@@ -12,10 +13,32 @@ export default function Timeline({
   onUpdateClip, onDeleteClip, onUpdateText, onDeleteText
 }) {
   const rulerRef = useRef();
-  const [dragging, setDragging] = useState(null);
+  const [snapIndicator, setSnapIndicator] = useState(null);
 
   const pps = PX_PER_SEC * zoom;
   const totalWidth = Math.max(duration * pps + 200, 800);
+
+  // Collect all snap points from other clips
+  const getSnapPoints = (excludeId) => {
+    const pts = [0];
+    [...tracks.video, ...tracks.audio, ...textOverlays].forEach(c => {
+      if (c.id !== excludeId) {
+        pts.push(c.start, c.start + c.duration);
+      }
+    });
+    return pts;
+  };
+
+  const snapValue = (val, excludeId) => {
+    const pts = getSnapPoints(excludeId);
+    let closest = null;
+    let minDist = SNAP_THRESHOLD / pps;
+    for (const pt of pts) {
+      const d = Math.abs(val - pt);
+      if (d < minDist) { minDist = d; closest = pt; }
+    }
+    return closest !== null ? { snapped: closest, didSnap: true } : { snapped: val, didSnap: false };
+  };
 
   const handleRulerClick = (e) => {
     const rect = rulerRef.current.getBoundingClientRect();
@@ -30,14 +53,14 @@ export default function Timeline({
     const origStart = clip.start;
     const move = (me) => {
       const dx = me.clientX - startX;
-      const newStart = Math.max(0, origStart + dx / pps);
-      if (trackType === 'text') {
-        onUpdateText(clip.id, { start: newStart });
-      } else {
-        onUpdateClip(clip.id, { start: newStart });
-      }
+      const rawStart = Math.max(0, origStart + dx / pps);
+      const { snapped, didSnap } = snapValue(rawStart, clip.id);
+      setSnapIndicator(didSnap ? snapped : null);
+      if (trackType === 'text') onUpdateText(clip.id, { start: snapped });
+      else onUpdateClip(clip.id, { start: snapped });
     };
     const up = () => {
+      setSnapIndicator(null);
       window.removeEventListener('mousemove', move);
       window.removeEventListener('mouseup', up);
     };
@@ -45,20 +68,47 @@ export default function Timeline({
     window.addEventListener('mouseup', up);
   };
 
-  const handleResizeMouseDown = (e, clip, trackType) => {
+  // Right resize (end of clip)
+  const handleResizeRightMouseDown = (e, clip, trackType) => {
     e.stopPropagation();
     const startX = e.clientX;
     const origDur = clip.duration;
     const move = (me) => {
       const dx = me.clientX - startX;
-      const newDur = Math.max(0.5, origDur + dx / pps);
-      if (trackType === 'text') {
-        onUpdateText(clip.id, { duration: newDur });
-      } else {
-        onUpdateClip(clip.id, { duration: newDur });
-      }
+      const rawEnd = clip.start + Math.max(0.5, origDur + dx / pps);
+      const { snapped, didSnap } = snapValue(rawEnd, clip.id);
+      const newDur = Math.max(0.5, snapped - clip.start);
+      setSnapIndicator(didSnap ? snapped : null);
+      if (trackType === 'text') onUpdateText(clip.id, { duration: newDur });
+      else onUpdateClip(clip.id, { duration: newDur });
     };
     const up = () => {
+      setSnapIndicator(null);
+      window.removeEventListener('mousemove', move);
+      window.removeEventListener('mouseup', up);
+    };
+    window.addEventListener('mousemove', move);
+    window.addEventListener('mouseup', up);
+  };
+
+  // Left resize (trim start)
+  const handleResizeLeftMouseDown = (e, clip, trackType) => {
+    e.stopPropagation();
+    const startX = e.clientX;
+    const origStart = clip.start;
+    const origDur = clip.duration;
+    const move = (me) => {
+      const dx = me.clientX - startX;
+      const rawStart = Math.max(0, origStart + dx / pps);
+      const { snapped, didSnap } = snapValue(rawStart, clip.id);
+      const delta = snapped - origStart;
+      const newDur = Math.max(0.5, origDur - delta);
+      setSnapIndicator(didSnap ? snapped : null);
+      if (trackType === 'text') onUpdateText(clip.id, { start: snapped, duration: newDur });
+      else onUpdateClip(clip.id, { start: snapped, duration: newDur });
+    };
+    const up = () => {
+      setSnapIndicator(null);
       window.removeEventListener('mousemove', move);
       window.removeEventListener('mouseup', up);
     };
@@ -85,12 +135,22 @@ export default function Timeline({
       }}
       title={clip.name || clip.text}
     >
+      {/* Left trim handle */}
+      <div
+        onMouseDown={e => { e.stopPropagation(); handleResizeLeftMouseDown(e, clip, trackType); }}
+        style={{
+          position: 'absolute', left: 0, top: 0, width: 8, height: '100%',
+          cursor: 'ew-resize', backgroundColor: 'rgba(255,255,255,0.25)',
+          borderRadius: '6px 0 0 6px', zIndex: 2,
+        }}
+      />
+
       <div
         style={{ borderRadius: 6, overflow: 'hidden', width: '100%', height: '100%', position: 'relative' }}
       >
-        <div className="px-2 py-1 flex items-center gap-1 h-full">
+        <div className="px-3 py-1 flex items-center gap-1 h-full">
           <span className="text-xs text-white font-medium truncate flex-1">
-            {clip.name || clip.text}
+            {clip.speed && clip.speed !== 1 ? `${clip.speed}x ` : ''}{clip.name || clip.text}
           </span>
         </div>
 
@@ -122,12 +182,12 @@ export default function Timeline({
           </div>
         )}
 
-        {/* Resize handle */}
+        {/* Right resize handle */}
         <div
-          onMouseDown={e => { e.stopPropagation(); handleResizeMouseDown(e, clip, trackType); }}
+          onMouseDown={e => { e.stopPropagation(); handleResizeRightMouseDown(e, clip, trackType); }}
           style={{
             position: 'absolute', right: 0, top: 0, width: 8, height: '100%',
-            cursor: 'ew-resize', backgroundColor: 'rgba(255,255,255,0.2)',
+            cursor: 'ew-resize', backgroundColor: 'rgba(255,255,255,0.25)',
             borderRadius: '0 6px 6px 0',
           }}
         />
@@ -220,6 +280,15 @@ export default function Timeline({
               width: 2, height: TRACK_HEIGHT * 3, backgroundColor: '#a78bfa',
               pointerEvents: 'none', opacity: 0.8
             }} />
+
+            {/* Snap indicator */}
+            {snapIndicator !== null && (
+              <div style={{
+                position: 'absolute', left: snapIndicator * pps, top: 20,
+                width: 2, height: TRACK_HEIGHT * 3, backgroundColor: '#fbbf24',
+                pointerEvents: 'none', opacity: 0.9
+              }} />
+            )}
           </div>
         </div>
       </div>

@@ -141,6 +141,22 @@ export default function AIStudio() {
     if (selectedClip?.id === id) setSelectedClip(null);
   }, [selectedClip]);
 
+  const addSticker = useCallback((emoji) => {
+    const overlay = {
+      id: Date.now(),
+      text: emoji,
+      start: currentTime,
+      duration: 3,
+      x: 50, y: 50,
+      fontSize: 48,
+      color: '#ffffff',
+      bold: false,
+      type: 'text',
+    };
+    setTextOverlays(prev => [...prev, overlay]);
+    setSelectedClip({ ...overlay, trackType: 'text' });
+  }, [currentTime]);
+
   const splitClip = useCallback(() => {
     if (!selectedClip || selectedClip.trackType === 'text') return;
     const clip = [...tracks.video, ...tracks.audio].find(c => c.id === selectedClip.id);
@@ -333,6 +349,7 @@ export default function AIStudio() {
           setSubtitles={setSubtitles}
           subtitleStyle={subtitleStyle}
           setSubtitleStyle={setSubtitleStyle}
+          onAddSticker={addSticker}
         />
 
         <PreviewPanel
