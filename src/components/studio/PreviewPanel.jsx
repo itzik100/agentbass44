@@ -49,12 +49,12 @@ function getTransitionStyle(transition, progress, transitionDuration = 0.5) {
   }
 }
 
-// Internal audio player that syncs volume and seek
-function AudioPlayer({ clip, volume, isPlaying, seek }) {
+// Internal media player that syncs volume, seek, and playback
+function MediaSyncPlayer({ clip, volume, isPlaying, seek, tag = 'audio' }) {
   const ref = useRef();
   useEffect(() => {
     if (!ref.current || !clip.url) return;
-    ref.current.volume = volume;
+    ref.current.volume = Math.max(0, Math.min(1, volume));
   }, [volume]);
   useEffect(() => {
     if (!ref.current || !clip.url) return;
@@ -63,9 +63,11 @@ function AudioPlayer({ clip, volume, isPlaying, seek }) {
   }, [isPlaying]);
   useEffect(() => {
     if (!ref.current || !clip.url) return;
-    if (Math.abs(ref.current.currentTime - seek) > 0.5) ref.current.currentTime = seek;
+    if (Math.abs(ref.current.currentTime - seek) > 0.3) ref.current.currentTime = Math.max(0, seek);
   }, [seek]);
-  return <audio ref={ref} src={clip.url} />;
+  return tag === 'video'
+    ? <video ref={ref} src={clip.url} className="w-full h-full object-contain" muted={false} />
+    : <audio ref={ref} src={clip.url} />;
 }
 
 export default function PreviewPanel({
@@ -196,13 +198,15 @@ export default function PreviewPanel({
               style={mediaStyle}
             />
           ) : (
-            <video
-              key={currentVideoClip.id}
-              src={currentVideoClip.url}
-              className="w-full h-full object-contain"
-              style={mediaStyle}
-              muted
-            />
+            <div key={currentVideoClip.id} className="w-full h-full overflow-hidden" style={mediaStyle}>
+              <MediaSyncPlayer
+                clip={currentVideoClip}
+                volume={0}
+                isPlaying={isPlaying}
+                seek={clipProgress}
+                tag="video"
+              />
+            </div>
           )
         ) : (
           <div className="w-full h-full flex items-center justify-center">
@@ -257,12 +261,13 @@ export default function PreviewPanel({
 
         {/* Audio playback elements with volume/fade */}
         {activeAudioClips.map(clip => (
-          <AudioPlayer
+          <MediaSyncPlayer
             key={clip.id}
             clip={clip}
             volume={getAudioVolume(clip)}
             isPlaying={isPlaying}
             seek={currentTime - clip.start}
+            tag="audio"
           />
         ))}
       </div>

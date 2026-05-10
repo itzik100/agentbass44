@@ -134,10 +134,11 @@ export default function AIStudio() {
   }, [tracks]);
 
   const updateClip = useCallback((clipId, updates, addToHistory = true) => {
+    const skip = !addToHistory;
     setTracks(prev => ({
       video: prev.video.map(c => c.id === clipId ? { ...c, ...updates } : c),
       audio: prev.audio.map(c => c.id === clipId ? { ...c, ...updates } : c),
-    }), !addToHistory);
+    }), skip);
     if (selectedClip?.id === clipId) setSelectedClip(prev => ({ ...prev, ...updates }));
   }, [selectedClip, setTracks]);
 
@@ -175,6 +176,8 @@ export default function AIStudio() {
     setTextOverlays(prev => prev.map(o => o.id === id ? { ...o, ...updates } : o), !addToHistory);
     if (selectedClip?.id === id) setSelectedClip(prev => ({ ...prev, ...updates }));
   }, [selectedClip, setTextOverlays]);
+
+
 
   const deleteTextOverlay = useCallback((id) => {
     setTextOverlays(prev => prev.filter(o => o.id !== id));

@@ -72,7 +72,7 @@ export default function ChatSidebar({ messages, isRunning, onSend, voiceProvider
   };
 
   return (
-    <div className="w-64 flex-shrink-0 flex flex-col bg-zinc-900 border-r border-zinc-800" style={{ direction: 'rtl' }}>
+    <div className="w-64 flex-shrink-0 flex flex-col bg-zinc-900 border-r border-zinc-800">
       {/* Header */}
       <div className="px-3 py-2 border-b border-zinc-800 flex items-center gap-2">
         <span className="text-xs font-bold">🤖 AI Director</span>

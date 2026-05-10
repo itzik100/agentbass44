@@ -73,16 +73,21 @@ export default function Timeline({
     setSelectedClip({ ...clip, trackType });
     const startX = e.clientX;
     const origStart = clip.start;
+    let lastSnapped = origStart;
     const move = (me) => {
       const dx = me.clientX - startX;
       const rawStart = Math.max(0, origStart + dx / pps);
       const { snapped, didSnap } = snapValue(rawStart, clip.id);
+      lastSnapped = snapped;
       setSnapIndicator(didSnap ? snapped : null);
-      if (trackType === 'text') onUpdateText(clip.id, { start: snapped });
-      else onUpdateClip(clip.id, { start: snapped });
+      if (trackType === 'text') onUpdateText(clip.id, { start: snapped }, false); // skipHistory during drag
+      else onUpdateClip(clip.id, { start: snapped }, false);
     };
     const up = () => {
       setSnapIndicator(null);
+      // Commit final position to history
+      if (trackType === 'text') onUpdateText(clip.id, { start: lastSnapped }, true);
+      else onUpdateClip(clip.id, { start: lastSnapped }, true);
       window.removeEventListener('mousemove', move);
       window.removeEventListener('mouseup', up);
     };
@@ -95,17 +100,20 @@ export default function Timeline({
     e.stopPropagation();
     const startX = e.clientX;
     const origDur = clip.duration;
+    let lastDur = origDur;
     const move = (me) => {
       const dx = me.clientX - startX;
       const rawEnd = clip.start + Math.max(0.5, origDur + dx / pps);
       const { snapped, didSnap } = snapValue(rawEnd, clip.id);
-      const newDur = Math.max(0.5, snapped - clip.start);
+      lastDur = Math.max(0.5, snapped - clip.start);
       setSnapIndicator(didSnap ? snapped : null);
-      if (trackType === 'text') onUpdateText(clip.id, { duration: newDur });
-      else onUpdateClip(clip.id, { duration: newDur });
+      if (trackType === 'text') onUpdateText(clip.id, { duration: lastDur }, false);
+      else onUpdateClip(clip.id, { duration: lastDur }, false);
     };
     const up = () => {
       setSnapIndicator(null);
+      if (trackType === 'text') onUpdateText(clip.id, { duration: lastDur }, true);
+      else onUpdateClip(clip.id, { duration: lastDur }, true);
       window.removeEventListener('mousemove', move);
       window.removeEventListener('mouseup', up);
     };
@@ -119,18 +127,22 @@ export default function Timeline({
     const startX = e.clientX;
     const origStart = clip.start;
     const origDur = clip.duration;
+    let lastStart = origStart, lastDur = origDur;
     const move = (me) => {
       const dx = me.clientX - startX;
       const rawStart = Math.max(0, origStart + dx / pps);
       const { snapped, didSnap } = snapValue(rawStart, clip.id);
       const delta = snapped - origStart;
-      const newDur = Math.max(0.5, origDur - delta);
+      lastStart = snapped;
+      lastDur = Math.max(0.5, origDur - delta);
       setSnapIndicator(didSnap ? snapped : null);
-      if (trackType === 'text') onUpdateText(clip.id, { start: snapped, duration: newDur });
-      else onUpdateClip(clip.id, { start: snapped, duration: newDur });
+      if (trackType === 'text') onUpdateText(clip.id, { start: lastStart, duration: lastDur }, false);
+      else onUpdateClip(clip.id, { start: lastStart, duration: lastDur }, false);
     };
     const up = () => {
       setSnapIndicator(null);
+      if (trackType === 'text') onUpdateText(clip.id, { start: lastStart, duration: lastDur }, true);
+      else onUpdateClip(clip.id, { start: lastStart, duration: lastDur }, true);
       window.removeEventListener('mousemove', move);
       window.removeEventListener('mouseup', up);
     };
