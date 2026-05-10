@@ -156,8 +156,14 @@ export default function PreviewPanel({
               fontSize: `${overlay.fontSize}px`,
               color: overlay.color,
               fontWeight: overlay.bold ? 'bold' : 'normal',
+              fontFamily: overlay.fontFamily || 'inherit',
               textShadow: '2px 2px 4px rgba(0,0,0,0.8)',
-              whiteSpace: 'nowrap',
+              whiteSpace: overlay.isSubtitle ? 'normal' : 'nowrap',
+              textAlign: 'center',
+              maxWidth: overlay.isSubtitle ? '80%' : undefined,
+              backgroundColor: overlay.isSubtitle ? 'rgba(0,0,0,0.5)' : 'transparent',
+              padding: overlay.isSubtitle ? '2px 8px' : 0,
+              borderRadius: overlay.isSubtitle ? '4px' : 0,
             }}
           >
             {overlay.text}

@@ -3,8 +3,9 @@ import { Upload, Film, Image, Music, Plus } from 'lucide-react';
 import TTSPanel from './TTSPanel';
 import AvatarPanel from './AvatarPanel';
 import ScriptGenerator from './ScriptGenerator';
+import SubtitlesPanel from './SubtitlesPanel';
 
-export default function MediaPanel({ mediaFiles, setMediaFiles, onAddToTrack, onAddAudioUrl, onAddVideoUrl, voiceProvider, onScriptNarration, onScriptSection, onScriptAll }) {
+export default function MediaPanel({ mediaFiles, setMediaFiles, onAddToTrack, onAddAudioUrl, onAddVideoUrl, voiceProvider, onScriptNarration, onScriptSection, onScriptAll, audioClips, subtitles, setSubtitles, subtitleStyle, setSubtitleStyle }) {
   const inputRef = useRef();
 
   const handleFiles = (files) => {
@@ -30,6 +31,7 @@ export default function MediaPanel({ mediaFiles, setMediaFiles, onAddToTrack, on
       </div>
 
       <ScriptGenerator onAddNarration={onScriptNarration} onAddSection={onScriptSection} onAddAllToTimeline={onScriptAll} />
+      <SubtitlesPanel audioClips={audioClips} subtitles={subtitles} setSubtitles={setSubtitles} subtitleStyle={subtitleStyle} setSubtitleStyle={setSubtitleStyle} />
       <AvatarPanel onAddVideo={onAddVideoUrl} voiceProvider={voiceProvider} />
       <TTSPanel onAddAudio={onAddAudioUrl} />
 

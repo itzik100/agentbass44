@@ -29,6 +29,10 @@ export default function AIStudio() {
   const [textOverlays, setTextOverlays] = useState([]);
   const [activeFilter, setActiveFilter] = useState('none');
   const [zoom, setZoom] = useState(1);
+  const [subtitles, setSubtitles] = useState([]);
+  const [subtitleStyle, setSubtitleStyle] = useState({
+    fontSize: 24, color: '#ffffff', bold: false, fontFamily: 'Arial', x: 50, y: 88,
+  });
 
   // AI Chat state
   const [messages, setMessages] = useState([
@@ -317,17 +321,23 @@ export default function AIStudio() {
           onScriptNarration={handleScriptNarration}
           onScriptSection={handleScriptSection}
           onScriptAll={handleScriptAll}
+          audioClips={tracks.audio}
+          subtitles={subtitles}
+          setSubtitles={setSubtitles}
+          subtitleStyle={subtitleStyle}
+          setSubtitleStyle={setSubtitleStyle}
         />
 
         <PreviewPanel
           tracks={tracks}
-          textOverlays={textOverlays}
+          textOverlays={[...textOverlays, ...subtitles.map(s => ({ ...s, ...subtitleStyle, id: s.id, type: 'text' }))]}
           currentTime={currentTime}
           setCurrentTime={setCurrentTime}
           isPlaying={isPlaying}
           setIsPlaying={setIsPlaying}
           duration={duration}
           activeFilter={activeFilter}
+          subtitleStyle={subtitleStyle}
         />
 
         <PropertiesPanel
