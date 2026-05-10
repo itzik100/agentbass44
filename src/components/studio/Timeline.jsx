@@ -94,6 +94,17 @@ export default function Timeline({
           </span>
         </div>
 
+        {/* Volume indicator for audio clips */}
+        {trackType === 'audio' && clip.duration * pps > 60 && (
+          <div className="absolute bottom-1 left-1 flex items-center gap-1" onMouseDown={e => e.stopPropagation()}>
+            <span className="bg-zinc-700 text-zinc-300 text-xs px-1.5 py-0.5 rounded">
+              🔊 {Math.round((clip.volume ?? 1) * 100)}%
+            </span>
+            {clip.fadeIn > 0 && <span className="bg-indigo-800/80 text-indigo-200 text-xs px-1 py-0.5 rounded">↑{clip.fadeIn}s</span>}
+            {clip.fadeOut > 0 && <span className="bg-indigo-800/80 text-indigo-200 text-xs px-1 py-0.5 rounded">↓{clip.fadeOut}s</span>}
+          </div>
+        )}
+
         {/* Badges for video clips */}
         {trackType === 'video' && clip.duration * pps > 80 && (
           <div

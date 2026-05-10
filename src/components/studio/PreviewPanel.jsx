@@ -1,4 +1,4 @@
-import React, { useRef, useEffect, useState } from 'react';
+import React, { useRef, useEffect } from 'react';
 import { Play, Pause, SkipBack, SkipForward } from 'lucide-react';
 
 const CLIP_FILTER_CSS = {
@@ -49,6 +49,25 @@ function getTransitionStyle(transition, progress, transitionDuration = 0.5) {
   }
 }
 
+// Internal audio player that syncs volume and seek
+function AudioPlayer({ clip, volume, isPlaying, seek }) {
+  const ref = useRef();
+  useEffect(() => {
+    if (!ref.current || !clip.url) return;
+    ref.current.volume = volume;
+  }, [volume]);
+  useEffect(() => {
+    if (!ref.current || !clip.url) return;
+    if (isPlaying) ref.current.play().catch(() => {});
+    else ref.current.pause();
+  }, [isPlaying]);
+  useEffect(() => {
+    if (!ref.current || !clip.url) return;
+    if (Math.abs(ref.current.currentTime - seek) > 0.5) ref.current.currentTime = seek;
+  }, [seek]);
+  return <audio ref={ref} src={clip.url} />;
+}
+
 export default function PreviewPanel({
   tracks, textOverlays, currentTime, setCurrentTime,
   isPlaying, setIsPlaying, duration, activeFilter
@@ -96,6 +115,21 @@ export default function PreviewPanel({
   // Active text overlays at current time
   const activeTexts = textOverlays.filter(
     o => currentTime >= o.start && currentTime < o.start + o.duration
+  );
+
+  // Audio volume with fade in/out calculation
+  const getAudioVolume = (clip) => {
+    const elapsed = currentTime - clip.start;
+    const remaining = clip.duration - elapsed;
+    let vol = clip.volume ?? 1;
+    if (clip.fadeIn > 0 && elapsed < clip.fadeIn) vol *= elapsed / clip.fadeIn;
+    if (clip.fadeOut > 0 && remaining < clip.fadeOut) vol *= remaining / clip.fadeOut;
+    return Math.max(0, Math.min(1, vol));
+  };
+
+  // Active audio clips
+  const activeAudioClips = tracks.audio.filter(
+    c => currentTime >= c.start && currentTime < c.start + c.duration && c.url
   );
 
   useEffect(() => {
@@ -188,6 +222,17 @@ export default function PreviewPanel({
             {activeFilter}
           </div>
         )}
+
+        {/* Audio playback elements with volume/fade */}
+        {activeAudioClips.map(clip => (
+          <AudioPlayer
+            key={clip.id}
+            clip={clip}
+            volume={getAudioVolume(clip)}
+            isPlaying={isPlaying}
+            seek={currentTime - clip.start}
+          />
+        ))}
       </div>
 
       {/* Controls */}

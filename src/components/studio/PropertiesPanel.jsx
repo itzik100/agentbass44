@@ -5,7 +5,6 @@ import { Input } from '@/components/ui/input';
 
 const TRANSITIONS = ['none', 'fade', 'slide-left', 'slide-right', 'zoom', 'blur'];
 const CLIP_FILTERS = ['none', 'bright', 'contrast', 'grayscale', 'sepia', 'warm', 'cold', 'vivid', 'dark'];
-
 const FILTERS = ['none', 'bright', 'contrast', 'grayscale', 'sepia', 'warm', 'cold', 'vivid'];
 
 export default function PropertiesPanel({
@@ -13,6 +12,7 @@ export default function PropertiesPanel({
   activeFilter, setActiveFilter
 }) {
   const isText = selectedClip?.trackType === 'text';
+  const isAudio = selectedClip?.type === 'audio';
 
   return (
     <div className="w-56 flex flex-col bg-zinc-900 border-l border-zinc-800 overflow-y-auto">
@@ -20,7 +20,7 @@ export default function PropertiesPanel({
         <span className="text-xs font-semibold text-zinc-400 uppercase tracking-wider">מאפיינים</span>
       </div>
 
-      {/* Filters */}
+      {/* Global Filters */}
       <div className="px-3 py-3 border-b border-zinc-800">
         <p className="text-xs font-medium text-zinc-400 mb-2">פילטרים</p>
         <div className="grid grid-cols-2 gap-1.5">
@@ -44,9 +44,10 @@ export default function PropertiesPanel({
       {selectedClip ? (
         <div className="px-3 py-3 space-y-3">
           <p className="text-xs font-medium text-zinc-400">
-            {isText ? 'עריכת טקסט' : 'עריכת קליפ'}
+            {isText ? 'עריכת טקסט' : isAudio ? 'עריכת שמע' : 'עריכת קליפ'}
           </p>
 
+          {/* Text properties */}
           {isText && (
             <>
               <div>
@@ -115,7 +116,65 @@ export default function PropertiesPanel({
             </>
           )}
 
-          {!isText && (
+          {/* Audio properties */}
+          {isAudio && (
+            <>
+              <div>
+                <label className="text-xs text-zinc-500 block mb-1">
+                  עוצמת קול: <span className="text-zinc-300">{Math.round((selectedClip.volume ?? 1) * 100)}%</span>
+                </label>
+                <input
+                  type="range" min="0" max="1" step="0.05"
+                  value={selectedClip.volume ?? 1}
+                  onChange={e => onUpdateClip(selectedClip.id, { volume: +e.target.value })}
+                  className="w-full accent-emerald-500"
+                />
+              </div>
+              <div>
+                <label className="text-xs text-zinc-500 block mb-1">
+                  Fade In: <span className="text-zinc-300">{(selectedClip.fadeIn || 0).toFixed(1)}s</span>
+                </label>
+                <input
+                  type="range" min="0" max="3" step="0.1"
+                  value={selectedClip.fadeIn || 0}
+                  onChange={e => onUpdateClip(selectedClip.id, { fadeIn: +e.target.value })}
+                  className="w-full accent-indigo-500"
+                />
+              </div>
+              <div>
+                <label className="text-xs text-zinc-500 block mb-1">
+                  Fade Out: <span className="text-zinc-300">{(selectedClip.fadeOut || 0).toFixed(1)}s</span>
+                </label>
+                <input
+                  type="range" min="0" max="3" step="0.1"
+                  value={selectedClip.fadeOut || 0}
+                  onChange={e => onUpdateClip(selectedClip.id, { fadeOut: +e.target.value })}
+                  className="w-full accent-indigo-500"
+                />
+              </div>
+              <div className="border-t border-zinc-800 pt-2">
+                <label className="text-xs text-zinc-500 block mb-1">משך (שניות)</label>
+                <input
+                  type="number" min="0.1" step="0.5"
+                  value={selectedClip.duration || 5}
+                  onChange={e => onUpdateClip(selectedClip.id, { duration: +e.target.value })}
+                  className="w-full bg-zinc-800 border border-zinc-700 rounded px-2 py-1 text-xs text-white"
+                />
+              </div>
+              <div>
+                <label className="text-xs text-zinc-500 block mb-1">התחלה (שניות)</label>
+                <input
+                  type="number" min="0" step="0.5"
+                  value={selectedClip.start || 0}
+                  onChange={e => onUpdateClip(selectedClip.id, { start: +e.target.value })}
+                  className="w-full bg-zinc-800 border border-zinc-700 rounded px-2 py-1 text-xs text-white"
+                />
+              </div>
+            </>
+          )}
+
+          {/* Video / Image properties */}
+          {!isText && !isAudio && (
             <>
               <div>
                 <label className="text-xs text-zinc-500 block mb-1">משך (שניות)</label>

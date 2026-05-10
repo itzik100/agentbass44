@@ -4,6 +4,7 @@ import TTSPanel from './TTSPanel';
 import AvatarPanel from './AvatarPanel';
 import ScriptGenerator from './ScriptGenerator';
 import SubtitlesPanel from './SubtitlesPanel';
+import AudioPanel from './AudioPanel';
 
 export default function MediaPanel({ mediaFiles, setMediaFiles, onAddToTrack, onAddAudioUrl, onAddVideoUrl, voiceProvider, onScriptNarration, onScriptSection, onScriptAll, audioClips, subtitles, setSubtitles, subtitleStyle, setSubtitleStyle }) {
   const inputRef = useRef();
@@ -32,6 +33,7 @@ export default function MediaPanel({ mediaFiles, setMediaFiles, onAddToTrack, on
 
       <ScriptGenerator onAddNarration={onScriptNarration} onAddSection={onScriptSection} onAddAllToTimeline={onScriptAll} />
       <SubtitlesPanel audioClips={audioClips} subtitles={subtitles} setSubtitles={setSubtitles} subtitleStyle={subtitleStyle} setSubtitleStyle={setSubtitleStyle} />
+      <AudioPanel onAddAudio={onAddAudioUrl} />
       <AvatarPanel onAddVideo={onAddVideoUrl} voiceProvider={voiceProvider} />
       <TTSPanel onAddAudio={onAddAudioUrl} />
 
