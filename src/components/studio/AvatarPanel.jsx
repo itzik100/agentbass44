@@ -4,12 +4,12 @@ import { Button } from '@/components/ui/button';
 import { base44 } from '@/api/base44Client';
 
 const AVATARS = [
-  { id: 'noelle', name: 'Noelle', url: 'https://create-images-results.d-id.com/DefaultPresenters/Noelle_f/image.jpeg' },
-  { id: 'william', name: 'William', url: 'https://create-images-results.d-id.com/DefaultPresenters/William_m/image.jpeg' },
-  { id: 'amy', name: 'Amy', url: 'https://create-images-results.d-id.com/DefaultPresenters/Amy_f/image.jpeg' },
-  { id: 'daniel', name: 'Daniel', url: 'https://create-images-results.d-id.com/DefaultPresenters/Daniel_m/image.jpeg' },
-  { id: 'lisa', name: 'Lisa', url: 'https://create-images-results.d-id.com/DefaultPresenters/Lisa_f/image.jpeg' },
-  { id: 'michael', name: 'Michael', url: 'https://create-images-results.d-id.com/DefaultPresenters/Michael_m/image.jpeg' },
+  { id: 'noelle', name: 'Noelle', url: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=150&h=150&fit=crop&crop=face' },
+  { id: 'william', name: 'William', url: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150&h=150&fit=crop&crop=face' },
+  { id: 'amy', name: 'Amy', url: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=150&h=150&fit=crop&crop=face' },
+  { id: 'daniel', name: 'Daniel', url: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&h=150&fit=crop&crop=face' },
+  { id: 'lisa', name: 'Lisa', url: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=150&h=150&fit=crop&crop=face' },
+  { id: 'michael', name: 'Michael', url: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150&h=150&fit=crop&crop=face' },
 ];
 
 export default function AvatarPanel({ onAddVideo, voiceProvider }) {
