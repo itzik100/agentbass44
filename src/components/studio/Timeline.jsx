@@ -1,5 +1,5 @@
-import React, { useRef, useState } from 'react';
-import { Film, Music, Type, ZoomIn, ZoomOut } from 'lucide-react';
+import React, { useRef, useState, useCallback } from 'react';
+import { Film, Music, Type, ZoomIn, ZoomOut, ChevronDown, ChevronUp, GripHorizontal } from 'lucide-react';
 import TransitionBadge from './TransitionBadge';
 import ClipFilterBadge from './ClipFilterBadge';
 import AudioWaveform from './AudioWaveform';
@@ -15,6 +15,27 @@ export default function Timeline({
 }) {
   const rulerRef = useRef();
   const [snapIndicator, setSnapIndicator] = useState(null);
+  const [timelineHeight, setTimelineHeight] = useState(220);
+  const [collapsed, setCollapsed] = useState(false);
+  const dragStartY = useRef(null);
+  const dragStartHeight = useRef(null);
+
+  const handleResizeDragStart = useCallback((e) => {
+    e.preventDefault();
+    dragStartY.current = e.clientY;
+    dragStartHeight.current = timelineHeight;
+    const onMove = (me) => {
+      const dy = dragStartY.current - me.clientY; // drag up = bigger
+      const newH = Math.max(120, Math.min(500, dragStartHeight.current + dy));
+      setTimelineHeight(newH);
+    };
+    const onUp = () => {
+      window.removeEventListener('mousemove', onMove);
+      window.removeEventListener('mouseup', onUp);
+    };
+    window.addEventListener('mousemove', onMove);
+    window.addEventListener('mouseup', onUp);
+  }, [timelineHeight]);
 
   const pps = PX_PER_SEC * zoom;
   const totalWidth = Math.max(duration * pps + 200, 800);
@@ -208,22 +229,48 @@ export default function Timeline({
   }
 
   return (
-    <div className="flex flex-col bg-zinc-900 border-t border-zinc-800" style={{ height: '220px' }}>
-      {/* Zoom controls */}
-      <div className="flex items-center gap-2 px-3 py-1.5 border-b border-zinc-800">
+    <div className="flex flex-col bg-zinc-900 border-t border-zinc-800 flex-shrink-0"
+      style={{ height: collapsed ? 'auto' : timelineHeight }}>
+      {/* Resize drag handle */}
+      {!collapsed && (
+        <div
+          onMouseDown={handleResizeDragStart}
+          className="h-1.5 w-full cursor-ns-resize flex items-center justify-center group hover:bg-violet-600/30 transition-colors flex-shrink-0"
+          title="גרור לשינוי גובה"
+        >
+          <GripHorizontal className="w-4 h-3 text-zinc-700 group-hover:text-violet-400" />
+        </div>
+      )}
+
+      {/* Toolbar */}
+      <div className="flex items-center gap-2 px-3 py-1.5 border-b border-zinc-800 flex-shrink-0">
         <span className="text-xs text-zinc-500">Timeline</span>
         <span className="text-xs text-zinc-700 ml-2" title="קיצורי מקלדת: Space=נגן, J/L=קפוץ 5s, ←→=פריים, Del=מחק, Cmd+Z=בטל">⌨ קיצורים</span>
         <div className="flex-1" />
-        <button onClick={() => setZoom(z => Math.max(0.25, z - 0.25))} className="text-zinc-400 hover:text-white">
-          <ZoomOut className="w-4 h-4" />
-        </button>
-        <span className="text-xs text-zinc-500 w-10 text-center">{Math.round(zoom * 100)}%</span>
-        <button onClick={() => setZoom(z => Math.min(4, z + 0.25))} className="text-zinc-400 hover:text-white">
-          <ZoomIn className="w-4 h-4" />
+        {!collapsed && (
+          <>
+            <button onClick={() => setZoom(z => Math.max(0.25, z - 0.25))} className="text-zinc-400 hover:text-white">
+              <ZoomOut className="w-4 h-4" />
+            </button>
+            <span className="text-xs text-zinc-500 w-10 text-center">{Math.round(zoom * 100)}%</span>
+            <button onClick={() => setZoom(z => Math.min(4, z + 0.25))} className="text-zinc-400 hover:text-white">
+              <ZoomIn className="w-4 h-4" />
+            </button>
+            <div className="w-px h-4 bg-zinc-700 mx-1" />
+          </>
+        )}
+        <button
+          onClick={() => setCollapsed(c => !c)}
+          className="text-zinc-400 hover:text-white"
+          title={collapsed ? 'הרחב טיימליין' : 'הצר טיימליין'}
+        >
+          {collapsed ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
         </button>
       </div>
 
-      <div className="flex flex-1 overflow-hidden">
+      {collapsed && <div className="px-3 py-1 text-xs text-zinc-600">{tracks.video.length + tracks.audio.length + textOverlays.length} קליפים</div>}
+
+      {!collapsed && <div className="flex flex-1 overflow-hidden">
         {/* Track labels */}
         <div className="flex flex-col w-20 flex-shrink-0 border-r border-zinc-800">
           <div className="h-5" /> {/* ruler spacer */}
@@ -298,7 +345,7 @@ export default function Timeline({
             )}
           </div>
         </div>
-      </div>
+      </div>}
     </div>
   );
 }
