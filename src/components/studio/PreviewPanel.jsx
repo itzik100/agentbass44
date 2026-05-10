@@ -27,9 +27,9 @@ const GLOBAL_FILTERS = {
 };
 
 // Returns CSS style for transition animation based on progress (0→1) into the clip
-function getTransitionStyle(transition, progress) {
-  const DURATION = 0.5; // seconds of transition at clip start
-  const t = Math.min(progress / DURATION, 1); // 0→1 over first 0.5s
+function getTransitionStyle(transition, progress, transitionDuration = 0.5) {
+  const DURATION = transitionDuration;
+  const t = Math.min(progress / DURATION, 1); // 0→1 over transition duration
 
   if (t >= 1 || !transition || transition === 'none') return {};
 
@@ -69,7 +69,7 @@ export default function PreviewPanel({
   // Progress into clip (seconds)
   const clipProgress = currentVideoClip ? currentTime - currentVideoClip.start : 0;
   const transitionStyle = currentVideoClip
-    ? getTransitionStyle(currentVideoClip.transition, clipProgress)
+    ? getTransitionStyle(currentVideoClip.transition, clipProgress, currentVideoClip.transitionDuration || 0.5)
     : {};
 
   // Combine global filter + per-clip filter

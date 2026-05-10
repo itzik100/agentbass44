@@ -145,6 +145,22 @@ export default function PropertiesPanel({
                   {TRANSITIONS.map(t => <option key={t} value={t}>{t}</option>)}
                 </select>
               </div>
+              {selectedClip.transition && selectedClip.transition !== 'none' && (
+                <div>
+                  <label className="text-xs text-zinc-500 block mb-1">
+                    משך מעבר: <span className="text-zinc-300">{(selectedClip.transitionDuration || 0.5).toFixed(1)}s</span>
+                  </label>
+                  <input
+                    type="range" min="0.1" max="2" step="0.1"
+                    value={selectedClip.transitionDuration || 0.5}
+                    onChange={e => onUpdateClip(selectedClip.id, { transitionDuration: +e.target.value })}
+                    className="w-full accent-violet-500"
+                  />
+                  <div className="flex justify-between text-xs text-zinc-600 mt-0.5">
+                    <span>0.1s</span><span>2s</span>
+                  </div>
+                </div>
+              )}
               <div>
                 <label className="text-xs text-zinc-500 block mb-1">פילטר קליפ</label>
                 <select
