@@ -8,6 +8,7 @@ import AudioPanel from './AudioPanel';
 import StickerPanel from './StickerPanel';
 import TemplatesPanel from './TemplatesPanel';
 import LibraryPanel from './LibraryPanel';
+import ImageGeneratorPanel from './ImageGeneratorPanel';
 
 export default function MediaPanel({ mediaFiles, setMediaFiles, onAddToTrack, onAddAudioUrl, onAddVideoUrl, voiceProvider, onScriptNarration, onScriptSection, onScriptAll, audioClips, subtitles, setSubtitles, subtitleStyle, setSubtitleStyle, onAddSticker, onLoadTemplate, tracks, textOverlays }) {
   const inputRef = useRef();
@@ -64,6 +65,7 @@ export default function MediaPanel({ mediaFiles, setMediaFiles, onAddToTrack, on
             <SubtitlesPanel audioClips={audioClips} subtitles={subtitles} setSubtitles={setSubtitles} subtitleStyle={subtitleStyle} setSubtitleStyle={setSubtitleStyle} />
             <AudioPanel onAddAudio={onAddAudioUrl} />
             <StickerPanel onAddSticker={onAddSticker} />
+            <ImageGeneratorPanel onAddVideoUrl={onAddVideoUrl} />
             <AvatarPanel onAddVideo={onAddVideoUrl} voiceProvider={voiceProvider} />
             <TTSPanel onAddAudio={onAddAudioUrl} />
 
