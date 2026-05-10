@@ -311,7 +311,14 @@ export default function AIStudio() {
 
   return (
     <div className="flex flex-col h-screen bg-zinc-950 text-white overflow-hidden">
-      <Toolbar onAddText={addTextOverlay} onSplit={splitClip} selectedClip={selectedClip} />
+      <Toolbar
+        onAddText={addTextOverlay}
+        onSplit={splitClip}
+        selectedClip={selectedClip}
+        tracks={tracks}
+        textOverlays={[...textOverlays, ...subtitles.map(s => ({ ...s, ...subtitleStyle, id: s.id, type: 'text' }))]}
+        duration={duration}
+      />
 
       <div className="flex flex-1 overflow-hidden">
         <MediaPanel
