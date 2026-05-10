@@ -1,0 +1,155 @@
+import React from 'react';
+import { Trash2 } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+
+const FILTERS = ['none', 'bright', 'contrast', 'grayscale', 'sepia', 'warm', 'cold', 'vivid'];
+
+export default function PropertiesPanel({
+  selectedClip, onUpdateClip, onUpdateText, onDeleteClip, onDeleteText,
+  activeFilter, setActiveFilter
+}) {
+  const isText = selectedClip?.trackType === 'text';
+
+  return (
+    <div className="w-56 flex flex-col bg-zinc-900 border-l border-zinc-800 overflow-y-auto">
+      <div className="px-3 py-2 border-b border-zinc-800">
+        <span className="text-xs font-semibold text-zinc-400 uppercase tracking-wider">מאפיינים</span>
+      </div>
+
+      {/* Filters */}
+      <div className="px-3 py-3 border-b border-zinc-800">
+        <p className="text-xs font-medium text-zinc-400 mb-2">פילטרים</p>
+        <div className="grid grid-cols-2 gap-1.5">
+          {FILTERS.map(f => (
+            <button
+              key={f}
+              onClick={() => setActiveFilter(f)}
+              className={`text-xs px-2 py-1.5 rounded capitalize transition-colors ${
+                activeFilter === f
+                  ? 'bg-violet-600 text-white'
+                  : 'bg-zinc-800 text-zinc-400 hover:bg-zinc-700 hover:text-white'
+              }`}
+            >
+              {f === 'none' ? 'ללא' : f}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* Clip / Text Properties */}
+      {selectedClip ? (
+        <div className="px-3 py-3 space-y-3">
+          <p className="text-xs font-medium text-zinc-400">
+            {isText ? 'עריכת טקסט' : 'עריכת קליפ'}
+          </p>
+
+          {isText && (
+            <>
+              <div>
+                <label className="text-xs text-zinc-500 block mb-1">תוכן</label>
+                <Input
+                  value={selectedClip.text || ''}
+                  onChange={e => onUpdateText(selectedClip.id, { text: e.target.value })}
+                  className="bg-zinc-800 border-zinc-700 text-white text-sm h-8"
+                />
+              </div>
+              <div>
+                <label className="text-xs text-zinc-500 block mb-1">גודל פונט</label>
+                <input
+                  type="range" min="12" max="96"
+                  value={selectedClip.fontSize || 32}
+                  onChange={e => onUpdateText(selectedClip.id, { fontSize: +e.target.value })}
+                  className="w-full accent-violet-500"
+                />
+                <span className="text-xs text-zinc-500">{selectedClip.fontSize}px</span>
+              </div>
+              <div>
+                <label className="text-xs text-zinc-500 block mb-1">צבע</label>
+                <input
+                  type="color"
+                  value={selectedClip.color || '#ffffff'}
+                  onChange={e => onUpdateText(selectedClip.id, { color: e.target.value })}
+                  className="w-full h-8 rounded cursor-pointer bg-zinc-800 border-zinc-700"
+                />
+              </div>
+              <div>
+                <label className="text-xs text-zinc-500 block mb-1">מיקום X (%)</label>
+                <input
+                  type="range" min="5" max="95"
+                  value={selectedClip.x || 50}
+                  onChange={e => onUpdateText(selectedClip.id, { x: +e.target.value })}
+                  className="w-full accent-violet-500"
+                />
+              </div>
+              <div>
+                <label className="text-xs text-zinc-500 block mb-1">מיקום Y (%)</label>
+                <input
+                  type="range" min="5" max="95"
+                  value={selectedClip.y || 80}
+                  onChange={e => onUpdateText(selectedClip.id, { y: +e.target.value })}
+                  className="w-full accent-violet-500"
+                />
+              </div>
+              <div>
+                <label className="text-xs text-zinc-500 block mb-1">משך (שניות)</label>
+                <input
+                  type="number" min="0.5" step="0.5"
+                  value={selectedClip.duration || 3}
+                  onChange={e => onUpdateText(selectedClip.id, { duration: +e.target.value })}
+                  className="w-full bg-zinc-800 border border-zinc-700 rounded px-2 py-1 text-xs text-white"
+                />
+              </div>
+              <label className="flex items-center gap-2 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={selectedClip.bold || false}
+                  onChange={e => onUpdateText(selectedClip.id, { bold: e.target.checked })}
+                  className="accent-violet-500"
+                />
+                <span className="text-xs text-zinc-400">מודגש</span>
+              </label>
+            </>
+          )}
+
+          {!isText && (
+            <>
+              <div>
+                <label className="text-xs text-zinc-500 block mb-1">משך (שניות)</label>
+                <input
+                  type="number" min="0.1" step="0.5"
+                  value={selectedClip.duration || 5}
+                  onChange={e => onUpdateClip(selectedClip.id, { duration: +e.target.value })}
+                  className="w-full bg-zinc-800 border border-zinc-700 rounded px-2 py-1 text-xs text-white"
+                />
+              </div>
+              <div>
+                <label className="text-xs text-zinc-500 block mb-1">התחלה (שניות)</label>
+                <input
+                  type="number" min="0" step="0.5"
+                  value={selectedClip.start || 0}
+                  onChange={e => onUpdateClip(selectedClip.id, { start: +e.target.value })}
+                  className="w-full bg-zinc-800 border border-zinc-700 rounded px-2 py-1 text-xs text-white"
+                />
+              </div>
+            </>
+          )}
+
+          <Button
+            variant="destructive"
+            size="sm"
+            className="w-full gap-1.5 mt-2"
+            onClick={() => isText ? onDeleteText(selectedClip.id) : onDeleteClip(selectedClip.id)}
+          >
+            <Trash2 className="w-3.5 h-3.5" />
+            מחק
+          </Button>
+        </div>
+      ) : (
+        <div className="px-3 py-4">
+          <p className="text-xs text-zinc-600 text-center">בחר קליפ או טקסט לעריכה</p>
+        </div>
+      )}
+    </div>
+  );
+}
