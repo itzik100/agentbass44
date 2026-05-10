@@ -141,6 +141,14 @@ export default function AIStudio() {
     if (selectedClip?.id === id) setSelectedClip(null);
   }, [selectedClip]);
 
+  const loadTemplate = useCallback((data) => {
+    setTracks({ video: data.video || [], audio: data.audio || [] });
+    setTextOverlays(data.textOverlays || []);
+    setSelectedClip(null);
+    setCurrentTime(0);
+    setIsPlaying(false);
+  }, []);
+
   const addSticker = useCallback((emoji) => {
     const overlay = {
       id: Date.now(),
@@ -350,6 +358,9 @@ export default function AIStudio() {
           subtitleStyle={subtitleStyle}
           setSubtitleStyle={setSubtitleStyle}
           onAddSticker={addSticker}
+          onLoadTemplate={loadTemplate}
+          tracks={tracks}
+          textOverlays={textOverlays}
         />
 
         <PreviewPanel

@@ -6,8 +6,9 @@ import ScriptGenerator from './ScriptGenerator';
 import SubtitlesPanel from './SubtitlesPanel';
 import AudioPanel from './AudioPanel';
 import StickerPanel from './StickerPanel';
+import TemplatesPanel from './TemplatesPanel';
 
-export default function MediaPanel({ mediaFiles, setMediaFiles, onAddToTrack, onAddAudioUrl, onAddVideoUrl, voiceProvider, onScriptNarration, onScriptSection, onScriptAll, audioClips, subtitles, setSubtitles, subtitleStyle, setSubtitleStyle, onAddSticker }) {
+export default function MediaPanel({ mediaFiles, setMediaFiles, onAddToTrack, onAddAudioUrl, onAddVideoUrl, voiceProvider, onScriptNarration, onScriptSection, onScriptAll, audioClips, subtitles, setSubtitles, subtitleStyle, setSubtitleStyle, onAddSticker, onLoadTemplate, tracks, textOverlays }) {
   const inputRef = useRef();
 
   const handleFiles = (files) => {
@@ -32,6 +33,7 @@ export default function MediaPanel({ mediaFiles, setMediaFiles, onAddToTrack, on
         <span className="text-xs font-semibold text-zinc-400 uppercase tracking-wider">מדיה</span>
       </div>
 
+      <TemplatesPanel tracks={tracks} textOverlays={textOverlays} onLoadTemplate={onLoadTemplate} mediaFiles={mediaFiles} />
       <ScriptGenerator onAddNarration={onScriptNarration} onAddSection={onScriptSection} onAddAllToTimeline={onScriptAll} />
       <SubtitlesPanel audioClips={audioClips} subtitles={subtitles} setSubtitles={setSubtitles} subtitleStyle={subtitleStyle} setSubtitleStyle={setSubtitleStyle} />
       <AudioPanel onAddAudio={onAddAudioUrl} />
