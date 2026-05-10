@@ -6,6 +6,8 @@ import PreviewPanel from '@/components/studio/PreviewPanel';
 import PropertiesPanel from '@/components/studio/PropertiesPanel';
 import Timeline from '@/components/studio/Timeline';
 import { base44 } from '@/api/base44Client';
+import { useUndoRedo } from '@/hooks/useUndoRedo';
+import { useKeyboardShortcuts } from '@/hooks/useKeyboardShortcuts';
 
 const PIPELINE_STAGES = [
   { id: 'instruction', label: 'הוראה', icon: '📋' },
@@ -20,13 +22,37 @@ const PIPELINE_STAGES = [
 ];
 
 export default function AIStudio() {
-  // Studio state
+  // Studio state with undo/redo
   const [mediaFiles, setMediaFiles] = useState([]);
-  const [tracks, setTracks] = useState({ video: [], audio: [] });
+  const {
+    state: editorState,
+    setState: setEditorState,
+    undo,
+    redo,
+    canUndo,
+    canRedo,
+  } = useUndoRedo({ tracks: { video: [], audio: [] }, textOverlays: [] });
+
+  const tracks = editorState.tracks;
+  const textOverlays = editorState.textOverlays;
+
+  const setTracks = useCallback((updater, skipHistory = false) => {
+    setEditorState(s => ({
+      ...s,
+      tracks: typeof updater === 'function' ? updater(s.tracks) : updater,
+    }), skipHistory);
+  }, [setEditorState]);
+
+  const setTextOverlays = useCallback((updater, skipHistory = false) => {
+    setEditorState(s => ({
+      ...s,
+      textOverlays: typeof updater === 'function' ? updater(s.textOverlays) : updater,
+    }), skipHistory);
+  }, [setEditorState]);
+
   const [selectedClip, setSelectedClip] = useState(null);
   const [currentTime, setCurrentTime] = useState(0);
   const [isPlaying, setIsPlaying] = useState(false);
-  const [textOverlays, setTextOverlays] = useState([]);
   const [activeFilter, setActiveFilter] = useState('none');
   const [zoom, setZoom] = useState(1);
   const [subtitles, setSubtitles] = useState([]);
@@ -49,6 +75,14 @@ export default function AIStudio() {
     ...textOverlays.map(o => o.start + o.duration),
     10
   );
+
+  // Keyboard shortcuts
+  useKeyboardShortcuts({
+    isPlaying, setIsPlaying, setCurrentTime, duration,
+    onUndo: undo, onRedo: redo,
+    onDelete: () => deleteClip(),
+    selectedClip, zoom, setZoom,
+  });
 
   // Studio handlers
   const addVideoUrl = useCallback(({ url, name, duration, type }) => {
@@ -99,21 +133,27 @@ export default function AIStudio() {
     setTracks(prev => ({ ...prev, [trackType]: [...prev[trackType], newClip] }));
   }, [tracks]);
 
-  const updateClip = useCallback((clipId, updates) => {
+  const updateClip = useCallback((clipId, updates, addToHistory = true) => {
     setTracks(prev => ({
       video: prev.video.map(c => c.id === clipId ? { ...c, ...updates } : c),
       audio: prev.audio.map(c => c.id === clipId ? { ...c, ...updates } : c),
-    }));
+    }), !addToHistory);
     if (selectedClip?.id === clipId) setSelectedClip(prev => ({ ...prev, ...updates }));
-  }, [selectedClip]);
+  }, [selectedClip, setTracks]);
 
   const deleteClip = useCallback((clipId) => {
-    setTracks(prev => ({
-      video: prev.video.filter(c => c.id !== clipId),
-      audio: prev.audio.filter(c => c.id !== clipId),
-    }));
-    if (selectedClip?.id === clipId) setSelectedClip(null);
-  }, [selectedClip]);
+    const id = clipId || selectedClip?.id;
+    if (!id) return;
+    if (selectedClip?.trackType === 'text') {
+      setTextOverlays(prev => prev.filter(o => o.id !== id));
+    } else {
+      setTracks(prev => ({
+        video: prev.video.filter(c => c.id !== id),
+        audio: prev.audio.filter(c => c.id !== id),
+      }));
+    }
+    if (selectedClip?.id === id) setSelectedClip(null);
+  }, [selectedClip, setTracks, setTextOverlays]);
 
   const addTextOverlay = useCallback(() => {
     const overlay = {
@@ -131,10 +171,10 @@ export default function AIStudio() {
     setSelectedClip({ ...overlay, trackType: 'text' });
   }, [currentTime]);
 
-  const updateTextOverlay = useCallback((id, updates) => {
-    setTextOverlays(prev => prev.map(o => o.id === id ? { ...o, ...updates } : o));
+  const updateTextOverlay = useCallback((id, updates, addToHistory = true) => {
+    setTextOverlays(prev => prev.map(o => o.id === id ? { ...o, ...updates } : o), !addToHistory);
     if (selectedClip?.id === id) setSelectedClip(prev => ({ ...prev, ...updates }));
-  }, [selectedClip]);
+  }, [selectedClip, setTextOverlays]);
 
   const deleteTextOverlay = useCallback((id) => {
     setTextOverlays(prev => prev.filter(o => o.id !== id));
@@ -342,6 +382,10 @@ export default function AIStudio() {
         tracks={tracks}
         textOverlays={[...textOverlays, ...subtitles.map(s => ({ ...s, ...subtitleStyle, id: s.id, type: 'text' }))]}
         duration={duration}
+        onUndo={undo}
+        onRedo={redo}
+        canUndo={canUndo}
+        canRedo={canRedo}
       />
 
       <div className="flex flex-1 overflow-hidden">

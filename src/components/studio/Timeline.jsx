@@ -2,6 +2,7 @@ import React, { useRef, useState } from 'react';
 import { Film, Music, Type, ZoomIn, ZoomOut } from 'lucide-react';
 import TransitionBadge from './TransitionBadge';
 import ClipFilterBadge from './ClipFilterBadge';
+import AudioWaveform from './AudioWaveform';
 
 const TRACK_HEIGHT = 48;
 const PX_PER_SEC = 80;
@@ -154,14 +155,19 @@ export default function Timeline({
           </span>
         </div>
 
-        {/* Volume indicator for audio clips */}
-        {trackType === 'audio' && clip.duration * pps > 60 && (
-          <div className="absolute bottom-1 left-1 flex items-center gap-1" onMouseDown={e => e.stopPropagation()}>
-            <span className="bg-zinc-700 text-zinc-300 text-xs px-1.5 py-0.5 rounded">
-              🔊 {Math.round((clip.volume ?? 1) * 100)}%
+        {/* Waveform + volume for audio clips */}
+        {trackType === 'audio' && (
+          <div className="absolute inset-0 flex items-center px-2" onMouseDown={e => e.stopPropagation()} style={{ pointerEvents: 'none' }}>
+            <AudioWaveform clip={clip} width={Math.max(clip.duration * pps - 20, 10)} height={26} />
+          </div>
+        )}
+        {trackType === 'audio' && clip.duration * pps > 80 && (
+          <div className="absolute top-1 right-2 flex items-center gap-1 z-10" onMouseDown={e => e.stopPropagation()}>
+            <span className="bg-black/40 text-zinc-200 text-xs px-1 py-0.5 rounded">
+              🔊{Math.round((clip.volume ?? 1) * 100)}%
             </span>
-            {clip.fadeIn > 0 && <span className="bg-indigo-800/80 text-indigo-200 text-xs px-1 py-0.5 rounded">↑{clip.fadeIn}s</span>}
-            {clip.fadeOut > 0 && <span className="bg-indigo-800/80 text-indigo-200 text-xs px-1 py-0.5 rounded">↓{clip.fadeOut}s</span>}
+            {clip.fadeIn > 0 && <span className="bg-indigo-800/70 text-indigo-200 text-xs px-1 py-0.5 rounded">↑</span>}
+            {clip.fadeOut > 0 && <span className="bg-indigo-800/70 text-indigo-200 text-xs px-1 py-0.5 rounded">↓</span>}
           </div>
         )}
 
@@ -206,6 +212,7 @@ export default function Timeline({
       {/* Zoom controls */}
       <div className="flex items-center gap-2 px-3 py-1.5 border-b border-zinc-800">
         <span className="text-xs text-zinc-500">Timeline</span>
+        <span className="text-xs text-zinc-700 ml-2" title="קיצורי מקלדת: Space=נגן, J/L=קפוץ 5s, ←→=פריים, Del=מחק, Cmd+Z=בטל">⌨ קיצורים</span>
         <div className="flex-1" />
         <button onClick={() => setZoom(z => Math.max(0.25, z - 0.25))} className="text-zinc-400 hover:text-white">
           <ZoomOut className="w-4 h-4" />

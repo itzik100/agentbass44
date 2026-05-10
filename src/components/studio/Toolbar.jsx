@@ -3,7 +3,7 @@ import { Scissors, Type, Undo2, Redo2, Download, Film } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import ExportModal from './ExportModal';
 
-export default function Toolbar({ onAddText, onSplit, selectedClip, tracks, textOverlays, duration }) {
+export default function Toolbar({ onAddText, onSplit, selectedClip, tracks, textOverlays, duration, onUndo, onRedo, canUndo, canRedo }) {
   const [showExport, setShowExport] = useState(false);
 
   return (
@@ -36,10 +36,10 @@ export default function Toolbar({ onAddText, onSplit, selectedClip, tracks, text
           <span>טקסט</span>
         </Button>
         <div className="w-px h-6 bg-zinc-700 mx-2" />
-        <Button variant="ghost" size="sm" className="text-zinc-300 hover:text-white hover:bg-zinc-700" title="בטל">
+        <Button variant="ghost" size="sm" onClick={onUndo} disabled={!canUndo} className="text-zinc-300 hover:text-white hover:bg-zinc-700 disabled:opacity-30" title="בטל (Cmd+Z)">
           <Undo2 className="w-4 h-4" />
         </Button>
-        <Button variant="ghost" size="sm" className="text-zinc-300 hover:text-white hover:bg-zinc-700" title="חזור">
+        <Button variant="ghost" size="sm" onClick={onRedo} disabled={!canRedo} className="text-zinc-300 hover:text-white hover:bg-zinc-700 disabled:opacity-30" title="חזור (Cmd+Shift+Z)">
           <Redo2 className="w-4 h-4" />
         </Button>
         <div className="flex-1" />

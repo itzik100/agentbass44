@@ -299,6 +299,7 @@ export default function PreviewPanel({
           <span className="text-xs text-zinc-400 ml-2">
             {formatTime(currentTime)} / {formatTime(duration)}
           </span>
+          <span className="text-xs text-zinc-600 ml-auto" title="קיצורי מקלדת">Space · J/K/L · ←→</span>
         </div>
       </div>
     </div>
