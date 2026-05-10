@@ -47,6 +47,21 @@ export default function AIStudio() {
   );
 
   // Studio handlers
+  const addAudioUrl = useCallback(({ url, name, duration }) => {
+    const existing = tracks.audio;
+    const lastEnd = existing.length > 0 ? Math.max(...existing.map(c => c.start + c.duration)) : 0;
+    const newClip = {
+      id: Date.now(),
+      name,
+      url,
+      type: 'audio',
+      start: lastEnd,
+      duration: duration || 10,
+      color: '#6366f1',
+    };
+    setTracks(prev => ({ ...prev, audio: [...prev.audio, newClip] }));
+  }, [tracks]);
+
   const addMediaToTrack = useCallback((file) => {
     const isAudio = file.type.startsWith('audio');
     const trackType = isAudio ? 'audio' : 'video';
@@ -196,7 +211,7 @@ export default function AIStudio() {
       <Toolbar onAddText={addTextOverlay} onSplit={splitClip} selectedClip={selectedClip} />
 
       <div className="flex flex-1 overflow-hidden">
-        <MediaPanel mediaFiles={mediaFiles} setMediaFiles={setMediaFiles} onAddToTrack={addMediaToTrack} />
+        <MediaPanel mediaFiles={mediaFiles} setMediaFiles={setMediaFiles} onAddToTrack={addMediaToTrack} onAddAudioUrl={addAudioUrl} />
 
         <PreviewPanel
           tracks={tracks}

@@ -1,7 +1,8 @@
 import React, { useRef } from 'react';
 import { Upload, Film, Image, Music, Plus } from 'lucide-react';
+import TTSPanel from './TTSPanel';
 
-export default function MediaPanel({ mediaFiles, setMediaFiles, onAddToTrack }) {
+export default function MediaPanel({ mediaFiles, setMediaFiles, onAddToTrack, onAddAudioUrl }) {
   const inputRef = useRef();
 
   const handleFiles = (files) => {
@@ -25,6 +26,8 @@ export default function MediaPanel({ mediaFiles, setMediaFiles, onAddToTrack }) 
       <div className="px-3 py-2 border-b border-zinc-800">
         <span className="text-xs font-semibold text-zinc-400 uppercase tracking-wider">מדיה</span>
       </div>
+
+      <TTSPanel onAddAudio={onAddAudioUrl} />
 
       <div
         className="mx-3 mt-3 border-2 border-dashed border-zinc-700 rounded-lg p-4 text-center cursor-pointer hover:border-violet-500 transition-colors"
