@@ -2,8 +2,9 @@ import React, { useRef } from 'react';
 import { Upload, Film, Image, Music, Plus } from 'lucide-react';
 import TTSPanel from './TTSPanel';
 import AvatarPanel from './AvatarPanel';
+import ScriptGenerator from './ScriptGenerator';
 
-export default function MediaPanel({ mediaFiles, setMediaFiles, onAddToTrack, onAddAudioUrl, onAddVideoUrl, voiceProvider }) {
+export default function MediaPanel({ mediaFiles, setMediaFiles, onAddToTrack, onAddAudioUrl, onAddVideoUrl, voiceProvider, onScriptNarration, onScriptSection, onScriptAll }) {
   const inputRef = useRef();
 
   const handleFiles = (files) => {
@@ -28,6 +29,7 @@ export default function MediaPanel({ mediaFiles, setMediaFiles, onAddToTrack, on
         <span className="text-xs font-semibold text-zinc-400 uppercase tracking-wider">מדיה</span>
       </div>
 
+      <ScriptGenerator onAddNarration={onScriptNarration} onAddSection={onScriptSection} onAddAllToTimeline={onScriptAll} />
       <AvatarPanel onAddVideo={onAddVideoUrl} voiceProvider={voiceProvider} />
       <TTSPanel onAddAudio={onAddAudioUrl} />
 

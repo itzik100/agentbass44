@@ -152,6 +152,90 @@ export default function AIStudio() {
     }));
   }, [selectedClip, tracks, currentTime]);
 
+  // Script generator handlers
+  const handleScriptNarration = useCallback((narration) => {
+    // Add narration as a placeholder audio clip (user can generate TTS from it separately)
+    const existing = tracks.audio;
+    const lastEnd = existing.length > 0 ? Math.max(...existing.map(c => c.start + c.duration)) : 0;
+    setTracks(prev => ({
+      ...prev,
+      audio: [...prev.audio, {
+        id: Date.now(), name: `קריינות: ${narration.slice(0, 30)}`,
+        url: '', type: 'audio', start: lastEnd, duration: 10, color: '#6366f1',
+        narrationText: narration,
+      }]
+    }));
+  }, [tracks]);
+
+  const handleScriptSection = useCallback((section) => {
+    setTracks(prev => {
+      const lastEnd = prev.video.length > 0 ? Math.max(...prev.video.map(c => c.start + c.duration)) : 0;
+      const newClip = {
+        id: Date.now(), name: section.title,
+        url: '', type: 'image', start: lastEnd, duration: section.duration || 10,
+        color: section.type === 'intro' ? '#7c3aed' : section.type === 'outro' ? '#10b981' : '#f59e0b',
+      };
+      return { ...prev, video: [...prev.video, newClip] };
+    });
+    // Add screen texts as overlays
+    if (section.screen_texts?.length > 0) {
+      setTextOverlays(prev => {
+        const lastEnd = prev.length > 0 ? Math.max(...prev.map(o => o.start + o.duration)) : 0;
+        const newOverlays = section.screen_texts.map((st, i) => ({
+          id: Date.now() + i + 50,
+          text: st.text, start: lastEnd + i * 2, duration: 3,
+          x: 50, y: st.style === 'title' ? 50 : st.style === 'subtitle' ? 65 : 85,
+          fontSize: st.style === 'title' ? 40 : st.style === 'subtitle' ? 28 : 20,
+          color: st.style === 'caption' ? '#ffff00' : '#ffffff', bold: st.style === 'title', type: 'text',
+        }));
+        return [...prev, ...newOverlays];
+      });
+    }
+  }, []);
+
+  const handleScriptAll = useCallback((script) => {
+    if (!script?.sections) return;
+    let videoStart = tracks.video.length > 0 ? Math.max(...tracks.video.map(c => c.start + c.duration)) : 0;
+    let audioStart = tracks.audio.length > 0 ? Math.max(...tracks.audio.map(c => c.start + c.duration)) : 0;
+    const newVideos = [];
+    const newAudios = [];
+    const newTexts = [];
+
+    script.sections.forEach((section, i) => {
+      newVideos.push({
+        id: Date.now() + i, name: section.title,
+        url: '', type: 'image', start: videoStart, duration: section.duration || 10,
+        color: section.type === 'intro' ? '#7c3aed' : section.type === 'outro' ? '#10b981' : '#f59e0b',
+      });
+      if (section.narration) {
+        newAudios.push({
+          id: Date.now() + i + 100, name: `קריינות: ${section.title}`,
+          url: '', type: 'audio', start: audioStart, duration: section.duration || 10,
+          color: '#6366f1', narrationText: section.narration,
+        });
+        audioStart += section.duration || 10;
+      }
+      if (section.screen_texts?.length > 0) {
+        section.screen_texts.forEach((st, j) => {
+          newTexts.push({
+            id: Date.now() + i * 10 + j + 200, text: st.text,
+            start: videoStart + j * 2, duration: 3,
+            x: 50, y: st.style === 'title' ? 50 : st.style === 'subtitle' ? 65 : 85,
+            fontSize: st.style === 'title' ? 40 : st.style === 'subtitle' ? 28 : 20,
+            color: st.style === 'caption' ? '#ffff00' : '#ffffff', bold: st.style === 'title', type: 'text',
+          });
+        });
+      }
+      videoStart += section.duration || 10;
+    });
+
+    setTracks(prev => ({
+      video: [...prev.video, ...newVideos],
+      audio: [...prev.audio, ...newAudios],
+    }));
+    setTextOverlays(prev => [...prev, ...newTexts]);
+  }, [tracks]);
+
   // AI pipeline handler - adds results to studio timeline
   const addMessage = (role, content) => setMessages(prev => [...prev, { role, content }]);
 
@@ -226,7 +310,14 @@ export default function AIStudio() {
       <Toolbar onAddText={addTextOverlay} onSplit={splitClip} selectedClip={selectedClip} />
 
       <div className="flex flex-1 overflow-hidden">
-        <MediaPanel mediaFiles={mediaFiles} setMediaFiles={setMediaFiles} onAddToTrack={addMediaToTrack} onAddAudioUrl={addAudioUrl} onAddVideoUrl={addVideoUrl} voiceProvider={voiceProvider} />
+        <MediaPanel
+          mediaFiles={mediaFiles} setMediaFiles={setMediaFiles}
+          onAddToTrack={addMediaToTrack} onAddAudioUrl={addAudioUrl}
+          onAddVideoUrl={addVideoUrl} voiceProvider={voiceProvider}
+          onScriptNarration={handleScriptNarration}
+          onScriptSection={handleScriptSection}
+          onScriptAll={handleScriptAll}
+        />
 
         <PreviewPanel
           tracks={tracks}
